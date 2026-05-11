@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: resttemplateserver
-          image: sjh0310/resttemplateserver:latest
+          image: 210.90.24.172:8080/restproject/shim/resttemplateserver:d2d7629636607c9a4e497a4cf3c41d90d65864ca
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
