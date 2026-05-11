@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: resttemplateserver
+  labels:
+    app: resttemplateserver
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: resttemplateserver
+  template:
+    metadata:
+      labels:
+        app: resttemplateserver
+    spec:
+      containers:
+        - name: resttemplateserver
+          image: yklee2002/resttemplateserver:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          env:
+            # MySQL DB 설정
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:mysql://mysql:3306/bookdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8"
+            - name: SPRING_DATASOURCE_USERNAME
+              value: root
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: root1234
+
+            # OpenTelemetry Java Agent
+            - name: JAVA_TOOL_OPTIONS
+              value: "-javaagent:/otel/opentelemetry-javaagent.jar"
+
+            # OTEL 기본 설정
+            - name: OTEL_SERVICE_NAME
+              value: "resttemplateserver"
+
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://otel-collector.default.svc.cluster.local:4318"
+
+            - name: OTEL_EXPORTER_OTLP_PROTOCOL
+              value: "http/protobuf"
+
+            - name: OTEL_TRACES_EXPORTER
+              value: "otlp"
+
+            - name: OTEL_METRICS_EXPORTER
+              value: "none"
+
+            - name: OTEL_LOGS_EXPORTER
+              value: "none"
+
+            # JDBC 추적 활성화
+            - name: OTEL_INSTRUMENTATION_JDBC_ENABLED
+              value: "true"
+
+            - name: OTEL_INSTRUMENTATION_SPRING_WEB_ENABLED
+              value: "true"
+
+            - name: OTEL_INSTRUMENTATION_COMMON_DEFAULT_ENABLED
+              value: "true"
+
+          volumeMounts:
+            - name: otel-agent
+              mountPath: /otel
+
+      volumes:
+        - name: otel-agent
+          hostPath:
+            path: /otel
+            type: Directory
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: resttemplateserver
+spec:
+  type: NodePort
+  selector:
+    app: resttemplateserver
+  ports:
+    - port: 8080
+      targetPort: 8080
+      nodePort: 30104
