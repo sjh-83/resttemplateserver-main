@@ -58,7 +58,7 @@ jobs:
 
   update-manifest:
     name: Update K8s Manifest for ArgoCD
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: build-and-push
 
     steps:
