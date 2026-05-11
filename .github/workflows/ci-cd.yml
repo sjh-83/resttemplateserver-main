@@ -28,8 +28,6 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: maven
-
 
       - name: Build with Maven Wrapper
         shell: cmd
@@ -68,14 +66,15 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Update image tag in k8s.yaml
+        shell: powershell
         run: |
-          NEW_IMAGE="${{ env.HARBOR_REGISTRY }}/${{ env.HARBOR_PROJECT }}/${{ env.STUDENT_ID }}/${{ env.IMAGE_NAME }}:${{ needs.build-and-push.outputs.image_tag }}"
-          sed -i "s|image: .*${{ env.IMAGE_NAME }}.*|image: ${NEW_IMAGE}|g" k8s.yaml
+          $newImage = "${{ env.HARBOR_REGISTRY }}/${{ env.HARBOR_PROJECT }}/${{ env.STUDENT_ID }}/${{ env.IMAGE_NAME }}:${{ needs.build-and-push.outputs.image_tag }}"
+          (Get-Content k8s.yaml) -replace 'image: .*resttemplateserver.*', "image: $newImage" | Set-Content k8s.yaml
 
       - name: Commit and push manifest update
+        shell: powershell
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add k8s.yaml
-          git diff --staged --quiet || git commit -m "ci: update image to ${{ needs.build-and-push.outputs.image_tag }}"
-          git push
+          $diff = git diff --staged --quiet; if ($LASTEXITCODE -ne 0) { git commit -m "ci: update image to ${{ needs.build-and-push.outputs.image_tag }}"; git push }
