@@ -36,6 +36,7 @@ jobs:
         run: mvnw.cmd clean package -DskipTests
 
       - name: Set image tag
+        id: meta
         shell: cmd
         run: echo tag=%GITHUB_SHA%>> %GITHUB_OUTPUT%
         
